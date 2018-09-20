@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 import posixpath
+# import pyodbc as db
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -79,8 +80,28 @@ WSGI_APPLICATION = 'Portal.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'sql_server.pyodbc',
+        'HOST': 'LT-SRV-MISADEV3',
+        'PORT': '1433',
+        'NAME': 'Portal',
+        'USER': 'RobinEY',
+        'PASSWORD': 'RobinEY',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 11 for SQL Server',
+            'unicode_results': True,
+        },
+    },
+    'earlyyears': {
+        'ENGINE': 'sql_server.pyodbc',
+        'HOST': 'LT-SRV-MISADEV3',
+        'PORT': '1433',
+        'NAME': 'EarlyYears',
+        'USER': 'RobinEY',
+        'PASSWORD': 'RobinEY',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 11 for SQL Server',
+            'unicode_results': True,
+        }
     }
 }
 

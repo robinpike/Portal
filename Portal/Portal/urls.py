@@ -10,17 +10,19 @@ import app.forms
 import app.views
 
 # Uncomment the next lines to enable the admin:
-# from django.conf.urls import include
-# from django.contrib import admin
-# admin.autodiscover()
+from django.conf.urls import include
+from django.contrib import admin
+# from django.contrib.auth import views as auth_views
+admin.autodiscover()
 
 urlpatterns = [
     # Examples:
     url(r'^$', app.views.home, name='home'),
     url(r'^contact$', app.views.contact, name='contact'),
     url(r'^about$', app.views.about, name='about'),
+    # url( r'^login/$',auth_views.LoginView.as_view(template_name="useraccounts/login.html"), name="login"),
     url(r'^login/$',
-        django.contrib.auth.views.login,
+        django.contrib.auth.views.LoginView,
         {
             'template_name': 'app/login.html',
             'authentication_form': app.forms.BootstrapAuthenticationForm,
@@ -32,7 +34,7 @@ urlpatterns = [
         },
         name='login'),
     url(r'^logout$',
-        django.contrib.auth.views.logout,
+        django.contrib.auth.views.LogoutView,
         {
             'next_page': '/',
         },
