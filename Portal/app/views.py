@@ -43,16 +43,16 @@ def about(request):
     cur = con.cursor()
  
     #SELECT all rows from LA table
-    qry = 'SELECT LACode, LAName FROM EarlyYears.GIS.LA WHERE LACode = \'E09000012\''
+    qry = 'SELECT LACode, LAName FROM EarlyYears.GIS.LA' # WHERE LACode = \'E09000012\''
     cur.execute(qry)
  
     row = cur.fetchone() #Fetch first row
     s = ''
     while row: #Fetch all rows using a while loop
-        if s == '':
-            s = row.LACode + '\t' + row.LAName
-        else:
-            s = s + '\n' + row.LACode + '\t' + row.LAName
+#        if s == '':
+#            s = row.LACode + '\t' + row.LAName
+#        else:
+        s = s + '<p>' + row.LACode + '\t' + row.LAName + '</p>'
         row = cur.fetchone()
     cur.close() #Close the cursor and connection objects
     con.close()    
