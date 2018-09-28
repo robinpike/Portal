@@ -4,6 +4,7 @@ Definition of models.
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import RegexValidator
 import datetime
 
 class User(AbstractUser):
@@ -47,15 +48,14 @@ class FeeScale(models.Model):
 
 class Setting(models.Model):
 
-    setting_name = models.CharField(max_length=100, required=True)
-    setting_address_1 = models.CharField(max_length=100, required=True)
+    setting_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_address_1 = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     setting_address_2 = models.CharField(max_length=100)
     setting_address_3 = models.CharField(max_length=100)
     setting_address_4 = models.CharField(max_length=100)
     setting_address_5 = models.CharField(max_length=100)
     setting_postcode = models.CharField(
         max_length=8,
-        required=True,
         validators=[
             RegexValidator(
                 regex='^[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}$',
@@ -63,12 +63,12 @@ class Setting(models.Model):
                 code='invalid_postcode'
             ),
         ]
-    )
-    setting_phone_number = models.CharField(max_length=20, required=True)
-    setting_email_address = models.EmailField(required=True)
-    manager_title = models.CharField(max_length=10, required=True)
-    manager_first_name = models.CharField(max_length=100, required=True)
-    manager_last_name = models.CharField(max_length=100, required=True)
+    ) # required=True, produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_phone_number = models.CharField(max_length=20)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_email_address = models.EmailField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    manager_title = models.CharField(max_length=10)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    manager_first_name = models.CharField(max_length=100)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    manager_last_name = models.CharField(max_length=100)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     manager_mobile_number = models.CharField(
         max_length=14,
         validators=[
@@ -80,9 +80,9 @@ class Setting(models.Model):
         ]
     )
     manager_email_address = models.EmailField()
-    setting_dfe_urn = models.PositiveIntegerField(required=True)
-    setting_ofsted_urn = models.CharField(max_length=10, required=True)
-    setting_ofsted_outcome_date = models.DateField(required=True)
+    setting_dfe_urn = models.PositiveIntegerField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_ofsted_urn = models.CharField(max_length=10)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_ofsted_outcome_date = models.DateField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     OFSTED_OUTCOME_CHOICES = (
         ('Not Inspected Yet', 'Not Inspected Yet'),
         ('Outstanding', 'Outstanding'),
@@ -92,7 +92,7 @@ class Setting(models.Model):
         ('Requires Improvement', 'Requires Improvement'),
         ('Inadequate', 'Inadequate')
     )
-    setting_ofsted_outcome = models.CharField(max_length=20, choices=OFSTED_OUTCOME_CHOICES, required=True)
+    setting_ofsted_outcome = models.CharField(max_length=20, choices=OFSTED_OUTCOME_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     SETTING_CATEGORY_CHOICES = (
         ('CHMD', (
                 ('AGY', 'Part of Childminding Agency'),
@@ -105,7 +105,7 @@ class Setting(models.Model):
         ('PRIV', 'Private'),
         ('VOLY', 'Voluntary')
     )    
-    setting_category = models.CharField(max_length=4, choices=SETTING_CATEGORY_CHOICES, required=True)
+    setting_category = models.CharField(max_length=4, choices=SETTING_CATEGORY_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     SETTING_TYPE_CHOICES = (
         ('DNS', 'Day Nursery'),
         ('PPS', 'Playgroup or Pre-school'),
@@ -115,17 +115,24 @@ class Setting(models.Model):
         ('SSL', 'Satelite Sure Start Children\'s Centre'),
         ('OTH', 'Other')
     )    
-    setting_type = models.CharField(max_length=3, choices=SETTING_TYPE_CHOICES, required=True)
+    setting_type = models.CharField(max_length=3, choices=SETTING_TYPE_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
     SETTING_DAYCARE_CHOICES = (
-        ('F', 'Full Daycare'),
-        ('S', 'Sessional Daycare'),
-        ('O', 'Other Daycare')
+        ('F', 'Full day (6 hours or more)'),
+        ('S', 'Sessional day (less than 6 hours)'),
+        ('O', 'Other day care')
     )    
-    setting_daycare_type = models.CharField(max_length=1, choices=SETTING_DAYCARE_CHOICES, required=True)
-    setting_continuously_open = models.BooleanField(required=True)
-    setting_school_relationship = models.BooleanField(required=True)
-    setting_establishment_partnership = models.BooleanField(required=True)
-    setting_weeks_per_year_open = models.DecimalField(max_digits=3, decimal_places=1, default=38.0, required=True)
+    setting_daycare_type = models.CharField(max_length=1, choices=SETTING_DAYCARE_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_continuously_open = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_school_relationship = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_establishment_partnership = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_weeks_per_year_open = models.DecimalField(max_digits=3, decimal_places=1, default=38.0)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_total_teaching_staff = models.PositiveSmallIntegerField()
+    setting_level2_staff = models.PositiveSmallIntegerField()
+    setting_level3_staff_not_management = models.PositiveSmallIntegerField()
+    setting_level3_staff_management = models.PositiveSmallIntegerField()
+    setting_qts_staff = models.PositiveSmallIntegerField()
+    setting_eyps_staff = models.PositiveSmallIntegerField()
+    setting_eyts_staff = models.PositiveSmallIntegerField()
 
     def __unicode__(self):
         return self.text
@@ -157,14 +164,220 @@ class SettingFees(models.Model):
 
     fees_setting = models.ForeignKey(Setting, on_delete=models.CASCADE)
     FEE_GROUP = (
-        (F, 'Weekly Fixed'),
-        (U2, 'Under Two Year Old'),
-        (2, 'Two Year Old'),
-        (O2, 'Over Two Year Old'),
+        ('F', 'Weekly Fixed'),
+        ('U2', 'Under Two Year Old'),
+        ('2', 'Two Year Old'),
+        ('O2', 'Over Two Year Old')
     )
     fees_group = models.CharField(max_length=2, choices=FEE_GROUP)
     fees_hours = models.DecimalField(max_digits=3, decimal_places=2)
     fees_amount = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __unicode__(self):
+        return self.text
+
+class Pupil(models.Model):
+
+    pupil_setting = models.ForeignKey(Setting, on_delete=models.CASCADE)
+    pupil_first_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    pupil_last_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    pupil_address_1 = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    pupil_address_2 = models.CharField(max_length=100)
+    pupil_address_3 = models.CharField(max_length=100)
+    pupil_address_4 = models.CharField(max_length=100)
+    pupil_address_5 = models.CharField(max_length=100)
+    pupil_postcode = models.CharField(
+        max_length=8,
+        validators=[
+            RegexValidator(
+                regex='^[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}$',
+                message='Postcode is not a recognizable format',
+                code='invalid_postcode'
+            ),
+        ]
+    ) # required=True, produces TypeError: __init__() got an unexpected keyword argument 'required'
+    pupil_dob = models.DateField() # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    GENDER = (
+        ('1', 'Male'),
+        ('2', 'Female'),
+        ('9', 'Not Specified')
+       )
+    pupil_gender = models.CharField(max_length=1, choices=GENDER)
+    ETHNICITY = (
+        ('WBRI', 'White - British', (
+                ('WCOR', 'White - Cornish'),
+                ('WENG', 'White - English'),
+                ('WSCO', 'White - Scottish'),
+                ('WWEL', 'White - Welsh'),
+                ('WOWB', 'Other White British')
+            )
+         ),
+        ('WIRI', 'White - Irish'),
+        ('WIRT', 'Traveller of Irish heritage'),
+        ('WOTH', 'Any other white background', (
+                ('WALB', 'Albanian'),
+                ('WBOS', 'Bosnian- Herzegovinian'),
+                ('WCRO', 'Croatian'),
+                ('WGRE', 'Greek/ Greek Cypriot'),
+                ('WGRK', 'Greek'),
+                ('WGRC', 'Greek Cypriot'),
+                ('WITA', 'Italian'),
+                ('WKOS', 'Kosovan'),
+                ('WPOR', 'Portuguese'),
+                ('WSER', 'Serbian'),
+                ('WTUR', 'Turkish/Turkish Cypriot'),
+                ('WTUK', 'Turkish'),
+                ('WTUC', 'Turkish Cypriot'),
+                ('WEUR', 'White European'),
+                ('WEEU', 'White Eastern European'),
+                ('WWEU', 'White Western European'),
+                ('WOTW', 'White other')
+            )
+         ),
+        ('WROM', 'Gypsy / Roma', (
+                ('WROG', 'Gypsy'),
+                ('WROR', 'Roma'),
+                ('WROO', 'Other Gypsy/Roma')
+            )
+         ),
+        ('MWBC', 'White and Black Caribbean'),
+        ('MWBA', 'White and Black African'),
+        ('MWAS', 'White and Asian', (
+                ('MWAP', 'White and Pakistani'),
+                ('MWAI', 'White and Indian'),
+                ('MWAO', 'White and any other Asian background')
+            )
+         ),
+        ('MOTH', 'Any other mixed background', (
+                ('MAOE', 'Asian and any other ethnic group'),
+                ('MABL', 'Asian and Black'),
+                ('MACH', 'Asian and Chinese'),
+                ('MBOE', 'Black and any other ethnic group'),
+                ('MBCH', 'Black and Chinese'),
+                ('MCOE', 'Chinese and any other ethnic group'),
+                ('MWOE', 'White and any other ethnic group'),
+                ('MWCH', 'White and Chinese'),
+                ('MOTM', 'Other mixed background')
+            )
+         ),
+        ('AIND', 'Indian'),
+        ('APKN', 'Pakistani', (
+                ('AMPK', 'Mirpuri Pakistani'),
+                ('AKPA', 'Kashmiri Pakistani'),
+                ('AOPK', 'Other Pakistani')
+            )
+         ),
+        ('ABAN', 'Bangladeshi'),
+        ('AOTH', 'Any other Asian background', (
+                ('AAFR', 'African Asian'),
+                ('AKAO', 'Kashmiri other'),
+                ('ANEP', 'Nepali'),
+                ('ASNL', 'Sri Lankan Sinhalese'),
+                ('ASLT', 'Sri Lankan Tamil'),
+                ('ASRO', 'Sri Lankan other'),
+                ('AOTA', 'Other Asian')
+            )
+         ),
+        ('BCRB', 'Black Caribbean'),
+        ('BAFR', 'Black - African', (
+                ('BANN', 'Black - Angolan'),
+                ('BCON', 'Black - Congolese'),
+                ('BGHA', 'Black - Ghanaian'),
+                ('BNGN', 'Black - Nigerian'),
+                ('BSLN', 'Black - Sierra Leonean'),
+                ('BSOM', 'Black - Somali'),
+                ('BSUD', 'Black - Sudanese'),
+                ('BAOF', 'Other Black African')
+            )
+         ),
+        ('BOTH', 'Any other Black background', (
+                ('BEUR', 'Black European'),
+                ('BNAM', 'Black North American'),
+                ('BOTB', 'Other Black')
+            )
+         ),
+        ('CHNE', 'Chinese', (
+                ('CHKC', 'Hong Kong Chinese'),
+                ('CMAL', 'Malaysian Chinese'),
+                ('CSNG', 'Singaporean Chinese'),
+                ('CTWN', 'Taiwanese'),
+                ('COCH', '')
+            )
+         ),
+        ('OOTH', 'Any other ethnic group', (
+                ('OAFG', 'Afghan'),
+                ('OARA', 'Arab other'),
+                ('OEGY', 'Egyptian'),
+                ('OFIL', 'Filipino'),
+                ('OIRN', 'Iranian'),
+                ('OIRQ', 'Iraqi'),
+                ('OJPN', 'Japanese'),
+                ('OKOR', 'Korean'),
+                ('OKRD', 'Kurdish'),
+                ('OLAM', 'Latin/South/Central American'),
+                ('OLEB', 'Lebanese'),
+                ('OLIB', 'Libyan'),
+                ('OMAL', 'Malay'),
+                ('OMRC', 'Moroccan'),
+                ('OPOL', 'Polynesian'),
+                ('OTHA', 'Thai'),
+                ('OVIE', 'Vietnamese'),
+                ('OYEM', 'Yemeni'),
+                ('OOEG', 'Other ethnic group')
+            )
+         ),
+        ('REFU', 'Refused'),
+        ('NOBT', 'Information not yet obtained')
+    )
+    pupil_ethnicity = models.CharField(max_length=4, choices=ETHNICITY)
+    SEN_PROVISION = (
+        ('N', 'No special educational need'),
+        ('S', 'Statement'),
+        ('E', 'Education, health and care plan'),
+        ('K', 'SEN support')
+    )
+    pupil_sen = models.CharField(max_length=1, choices=SEN_PROVISION)
+    pupil_daf = models.BooleanField()
+    pupil_start_date = models.DateField()
+    pupil_finish_date = models.DateField()
+    pupil_tyo_start_date = models.DateField()
+    pupil_tyo_finish_date = models.DateField()
+    pupil_sff_start_date = models.DateField()
+    pupil_sff_finish_date = models.DateField()
+    pupil_30h_start_date = models.DateField()
+    pupil_30h_finish_date = models.DateField()
+    pupil_30h_grace_period = models.DateField()
+    pupil_total_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_hours mon - sun
+    pupil_total_tyf_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_tyf_hours: mon + tue + wed + thu + fri + sat + sun
+    pupil_total_sff_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_sff_hours: mon + tue + wed + thu + fri + sat + sun
+    pupil_total_30h_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_30h_hours: mon + tue + wed + thu + fri + sat + sun
+    pupil_total_funded_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_funded_hours: mon + tue + wed + thu + fri + sat + sun
+    pupil_notes = models.TextField()
+    # TODO Parent attributes for funding streams
+ 
+    def __unicode__(self):
+        return self.text
+
+class Pupil_Sessions(models.Model):
+
+    session_pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE)
+    DAYS_OF_WEEK = (
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday'),
+        (7, 'Sunday')
+    )
+    session_day_of_week = models.PositiveSmallIntegerField(choices=DAYS_OF_WEEK)
+    session_start_time = models.TimeField(default=datetime.time(00, 00))
+    session_finish_time = models.TimeField(default=datetime.time(00, 00))
+    session_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_finish_time - session_start_time
+    session_tyf_hours = models.DecimalField(max_digits=4, decimal_places=2)
+    session_sff_hours = models.DecimalField(max_digits=4, decimal_places=2)
+    session_30h_hours = models.DecimalField(max_digits=4, decimal_places=2)
+    session_funded_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_tyf_hours + session_sff_hours + session_30h_hours
 
     def __unicode__(self):
         return self.text
