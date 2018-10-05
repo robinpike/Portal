@@ -204,7 +204,7 @@ class Pupil(models.Model):
        )
     pupil_gender = models.CharField(max_length=1, choices=GENDER)
     ETHNICITY = (
-        ('WBRI', 'White - British', (
+        ('WBRI', (
                 ('WCOR', 'White - Cornish'),
                 ('WENG', 'White - English'),
                 ('WSCO', 'White - Scottish'),
@@ -214,7 +214,7 @@ class Pupil(models.Model):
          ),
         ('WIRI', 'White - Irish'),
         ('WIRT', 'Traveller of Irish heritage'),
-        ('WOTH', 'Any other white background', (
+        ('WOTH', (
                 ('WALB', 'Albanian'),
                 ('WBOS', 'Bosnian- Herzegovinian'),
                 ('WCRO', 'Croatian'),
@@ -234,7 +234,7 @@ class Pupil(models.Model):
                 ('WOTW', 'White other')
             )
          ),
-        ('WROM', 'Gypsy / Roma', (
+        ('WROM', (
                 ('WROG', 'Gypsy'),
                 ('WROR', 'Roma'),
                 ('WROO', 'Other Gypsy/Roma')
@@ -242,13 +242,13 @@ class Pupil(models.Model):
          ),
         ('MWBC', 'White and Black Caribbean'),
         ('MWBA', 'White and Black African'),
-        ('MWAS', 'White and Asian', (
+        ('MWAS', (
                 ('MWAP', 'White and Pakistani'),
                 ('MWAI', 'White and Indian'),
                 ('MWAO', 'White and any other Asian background')
             )
          ),
-        ('MOTH', 'Any other mixed background', (
+        ('MOTH', (
                 ('MAOE', 'Asian and any other ethnic group'),
                 ('MABL', 'Asian and Black'),
                 ('MACH', 'Asian and Chinese'),
@@ -261,14 +261,14 @@ class Pupil(models.Model):
             )
          ),
         ('AIND', 'Indian'),
-        ('APKN', 'Pakistani', (
+        ('APKN', (
                 ('AMPK', 'Mirpuri Pakistani'),
                 ('AKPA', 'Kashmiri Pakistani'),
                 ('AOPK', 'Other Pakistani')
             )
          ),
         ('ABAN', 'Bangladeshi'),
-        ('AOTH', 'Any other Asian background', (
+        ('AOTH', (
                 ('AAFR', 'African Asian'),
                 ('AKAO', 'Kashmiri other'),
                 ('ANEP', 'Nepali'),
@@ -279,7 +279,7 @@ class Pupil(models.Model):
             )
          ),
         ('BCRB', 'Black Caribbean'),
-        ('BAFR', 'Black - African', (
+        ('BAFR', (
                 ('BANN', 'Black - Angolan'),
                 ('BCON', 'Black - Congolese'),
                 ('BGHA', 'Black - Ghanaian'),
@@ -290,13 +290,13 @@ class Pupil(models.Model):
                 ('BAOF', 'Other Black African')
             )
          ),
-        ('BOTH', 'Any other Black background', (
+        ('BOTH', (
                 ('BEUR', 'Black European'),
                 ('BNAM', 'Black North American'),
                 ('BOTB', 'Other Black')
             )
          ),
-        ('CHNE', 'Chinese', (
+        ('CHNE', (
                 ('CHKC', 'Hong Kong Chinese'),
                 ('CMAL', 'Malaysian Chinese'),
                 ('CSNG', 'Singaporean Chinese'),
@@ -304,7 +304,7 @@ class Pupil(models.Model):
                 ('COCH', '')
             )
          ),
-        ('OOTH', 'Any other ethnic group', (
+        ('OOTH', (
                 ('OAFG', 'Afghan'),
                 ('OARA', 'Arab other'),
                 ('OEGY', 'Egyptian'),
@@ -353,8 +353,85 @@ class Pupil(models.Model):
     pupil_total_30h_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_30h_hours: mon + tue + wed + thu + fri + sat + sun
     pupil_total_funded_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_funded_hours: mon + tue + wed + thu + fri + sat + sun
     pupil_notes = models.TextField()
-    # TODO Parent attributes for funding streams
- 
+    pupil_parent_name = models.CharField(max_length=100)
+    pupil_parent_dob = models.DateField()
+    pupil_parent_nino = models.CharField(
+        max_length=9,
+        validators=[
+            RegexValidator(
+                regex='^[ABCEGHJKLMNOPRSTWXYZ][ABCEGHJKLMNPRSTWXYZ][0-9]{6}[A-D ]$',
+                message='National Insurance number is not a recognizable format',
+                code='invalid_nino'
+            ),
+        ]
+    )
+    EYPP_STATUS = (
+        ('Parent Declined', 'Parent Declined'),
+        ('Incomplete data', 'Incomplete data'),
+        ('Submit', 'Submit'),
+        ('Ineligible', 'Ineligible'),
+        ('Eligible', 'Eligible')
+    )
+    eypp_status = models.CharField(max_length=15, choices=EYPP_STATUS)
+    eypp_check_date = models.DateField()
+    eypp_outcome = models.BooleanField()
+    tyf_reference = models.CharField(
+        max_length=17,
+        validators=[
+            RegexValidator(
+                regex='^TYF-[0-9]{4}-[A-Z0-9]{8}$',
+                message='TYF is not a recognizable format',
+                code='invalid_tyf'
+            ),
+        ]
+    )
+    TYF_STATUS = (
+        ('TYOF not claimed', 'TYOF not claimed'),
+        ('Invalid TYOF format', 'Invalid TYOF format'),
+        ('TYOF Reference not found on the Portal', 'TYOF Reference not found on the Portal'),
+        ('Eligibility dates not eligible for this term', 'Eligibility dates not eligible for this term'),
+        ('Sumitted and portal forenames are different', 'Sumitted and portal forenames are different'),
+        ('Sumitted and portal surnames are different', 'Sumitted and portal surnames are different'),
+        ('Submitted tyf start date precedes the eligibility start date', 'Submitted tyf start date precedes the eligibility start date'),
+        ('Eligible', 'Eligible')
+    )
+    tyf_status = models.CharField(max_length=100, choices=TYF_STATUS)
+    tyf_portal_forename = models.CharField(max_length=100)
+    tyf_portal_surname = models.CharField(max_length=100)
+    tyf_portal_dob = models.DateField()
+    TYF_FUNDING_BASIS = (
+        ('ECO', 'Economic criteria'),
+        ('HSD', 'High-level SEN or disability'),
+        ('LAA', 'Looked after or adopted from care')
+    )
+    tyf_basis_for_funding = models.CharField(max_length=3, choices=TYF_FUNDING_BASIS)
+    thirty_hours_dern = models.PositiveIntegerField(
+        validators=[
+            RegexValidator(
+                regex='^[1-9][0-9]{10}$',
+                message='DERN is not a recognizable format',
+                code='invalid_dern'
+            ),
+        ]
+    )
+    DERN_STATUS = (
+        ('Invalid DERN', 'Invalid DERN'),
+        ('Missing DERN', 'Missing DERN'),
+        ('DERN not found', 'DERN not found'),
+        ('30H not claimed', '30H not claimed'),
+        ('DoB out of range', 'DoB out of range'),
+        ('Child DoB does not match DoB on portal', 'Child DoB does not match DoB on portal'),
+        ('Invalid date format', 'Invalid date format'),
+        ('No Dates found on the Portal', 'No Dates found on the Portal'),
+        ('Beyond Grace Period on Portal', 'Beyond Grace Period on Portal'),
+        ('Eligible', 'Eligible')
+    )
+    thirty_hours_dern_status = models.CharField(max_length=100, choices=DERN_STATUS)
+    thirty_hours_portal_forename = models.CharField(max_length=100)
+    thirty_hours_portal_surname = models.CharField(max_length=100)
+    thirty_hours_portal_dob = models.DateField()
+
+
     def __unicode__(self):
         return self.text
 
