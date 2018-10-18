@@ -9,10 +9,66 @@ import datetime
 
 class User(AbstractUser):
 
+    is_sft_user = models.BooleanField(default=False)
     is_setting_user = models.BooleanField(default=False)
     is_la_user = models.BooleanField(default=False)
     is_super_user = models.BooleanField(default=False)
+    dfe_number = models.PositiveIntegerField() # setting users only, can be more than one setting user for each dfe number
+    la_code = models.CharField(max_length=9) # la users only
 
+    def __unicode__(self):
+        return self.text
+
+class Group():
+
+    group_name = models.CharField(max_length=30)
+    group_description = models.CharField(max_length=100)
+
+    def __unicode__(self):
+        return self.text
+
+class Membership():
+
+    user = models.ManyToManyField(User)
+    group = models.ManyToManyField(Group)
+    # user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    # group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
+
+    def __unicode__(self):
+        return self.text
+
+class Files():
+
+    file_name = models.CharField(max_length=100)
+    encrypted_file_name = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
+    FILE_TYPE_CHOICES = (
+        ('xml', 'XML'),
+        ('xsn', 'Microsoft InfoPath Form'),
+        ('xls', 'Microsoft Excel'),
+        ('doc', 'Microsoft Word'),
+        ('pdf', 'Adobe Acrobat Reader'),
+        ('csv', 'Comma Separated Values'),
+        ('txt', 'Plain Text'),
+        ('img', 'Image'),
+        ('vid', 'Video')
+    )
+    file_type = models.CharField(max_length=3, choices=FILE_TYPE_CHOICES)
+
+    def __unicode__(self):
+        return self.text
+
+class FilesSent():
+
+    sender = models.ManyToManyField(User)
+    recipient = models.ManyToManyField(User)
+    # sender = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    # recipient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    upload_date = models.DateField()
+    download_date = models.DateField()
+
+    def __unicode__(self):
+        return self.text
+    
 class Term(models.Model):
 
     term_name = models.CharField(max_length=50)

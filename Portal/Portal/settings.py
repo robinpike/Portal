@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 import posixpath
-# import pyodbc as db
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -124,11 +123,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# set AUTH_USER_MODEL setting to point to the 'MyUser' model, so that Django knows not to initialise the default model
+
+AUTH_USER_MODEL = 'Portal.User'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-gb'
 
 TIME_ZONE = 'UTC'
 
