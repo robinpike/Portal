@@ -32,8 +32,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'app',
     # Add your apps here to enable them
+    'Portal',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -125,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # set AUTH_USER_MODEL setting to point to the 'MyUser' model, so that Django knows not to initialise the default model
 
-AUTH_USER_MODEL = 'Portal.User'
+AUTH_USER_MODEL = 'Portal.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/

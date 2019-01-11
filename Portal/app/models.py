@@ -2,45 +2,85 @@
 Definition of models.
 """
 
+# TODO
+
+# help_text: enter help text for all fields requiring an informative description. Note that this value is not HTML-escaped in automatically-generated forms.
+# This lets you include HTML in help_text if you so desire. For example: help_text="Please use the following format: <em>YYYY-MM-DD</em>."
+
+# verbose_name: A human-readable name for the field used in field labels. If not specified, Django will infer the default verbose name from the field name.
+
+# default: The default value for the field. This can be a value or a callable object, in which case the object will be called every time a new record is created.
+
+# null: If True, Django will store blank values as NULL in the database for fields where this is appropriate (a CharField will instead store an empty string). The default is False.
+
+# blank: If True, the field is allowed to be blank in your forms. The default is False, which means that Django's form validation will force you to enter a value. 
+# This is often used with null=True , because if you're going to allow blank values, you also want the database to be able to represent them appropriately.
+
+# primary_key: If True, sets the current field as the primary key for the model (A primary key is a special database column designated to uniquely identify all the different table records). 
+# If no field is specified as the primary key then Django will automatically add a field for this purpose.
+
+# db_index: If True, a database index will be created for this field.
+
+# unique: when unique is True, you don’t need to specify db_index, because unique implies the creation of an index.
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
+from uuid import uuid4
 import datetime
 
-class User(AbstractUser):
+def generateUUID():
+    return str(uuid4())
 
-    is_sft_user = models.BooleanField(default=False)
-    is_setting_user = models.BooleanField(default=False)
-    is_la_user = models.BooleanField(default=False)
-    is_super_user = models.BooleanField(default=False)
-    dfe_number = models.PositiveIntegerField() # setting users only, can be more than one setting user for each dfe number
-    la_code = models.CharField(max_length=9) # la users only
+class CustomUser(AbstractUser):
 
-    def __unicode__(self):
-        return self.text
+    user_dfe_number = models.PositiveIntegerField(blank=True) # setting users only, can be more than one setting user for each dfe number
+    user_la_code = models.CharField(max_length=9, blank=True) # la users only
+    USER_TYPE_CHOICES = (
+        ('sft', 'Secure File Transfer user'),
+        ('setting', 'Setting user'),
+        ('LA', 'Local Authority user'),
+        ('admin', 'administrator'),
+        ('super', 'super user'),
+    )
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+    # is_sft_user = models.BooleanField(default=False)
+    # is_setting_user = models.BooleanField(default=False)
+    # is_la_user = models.BooleanField(default=False)
+    # is_super_user = models.BooleanField(default=False)
 
-class Group():
-
-    group_name = models.CharField(max_length=30)
-    group_description = models.CharField(max_length=100)
-
-    def __unicode__(self):
-        return self.text
-
-class Membership():
-
-    user = models.ManyToManyField(User)
-    group = models.ManyToManyField(Group)
-    # user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    # group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
+    class Meta: 
+        ordering = ['user_email']
 
     def __unicode__(self):
-        return self.text
+        return f"{self.user_email}"
 
-class Files():
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+class DistributionList():
+
+    distributionlist_name = models.CharField(max_length=30, primary_key=True)
+    distributionlist_description = models.CharField(max_length=100, blank=True)
+
+    class Meta: 
+        ordering = ['distributionlist_name']
+
+    def __unicode__(self):
+        return f"{self.distributionlist_name}"
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+class MemberOf():
+
+    distributionlist_id = models.ForeignKey('DistributionList', on_delete=models.CASCADE)
+    customuser_id = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+
+class TransferFile():
 
     file_name = models.CharField(max_length=100)
-    encrypted_file_name = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
+    encrypted_file_name = models.UUIDField(primary_key=False, default=generateUUID(), editable=False)
     FILE_TYPE_CHOICES = (
         ('xml', 'XML'),
         ('xsn', 'Microsoft InfoPath Form'),
@@ -54,62 +94,71 @@ class Files():
     )
     file_type = models.CharField(max_length=3, choices=FILE_TYPE_CHOICES)
 
+    class Meta: 
+        ordering = ['file_name']
+
     def __unicode__(self):
-        return self.text
+        return f"{self.file_name}"
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 class FilesSent():
 
-    sender = models.ManyToManyField(User)
-    recipient = models.ManyToManyField(User)
-    # sender = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    # recipient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    sender_id = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    recipient_id = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    file_id = models.ForeignKey('TransferFile', on_delete=models.CASCADE)
     upload_date = models.DateField()
     download_date = models.DateField()
 
-    def __unicode__(self):
-        return self.text
-    
 class Term(models.Model):
 
     term_name = models.CharField(max_length=50)
     term_start_date = models.DateField()
     term_end_date = models.DateField()
-    collection_date = models.DateField()
+    collection_date = models.DateField(help_text='The Monday of Census week')
     dob_min_date = models.DateField()
     dob_max_date = models.DateField()
 
+    class Meta: 
+        ordering = ['term_name']
+
     def __unicode__(self):
-        return self.text
+        return f"{self.term_name}"
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 class FundingStream(models.Model):
 
-    funding_term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    funding_type = models.CharField(max_length=3)
+    funding_term_id = models.ForeignKey('Term', on_delete=models.CASCADE)
+    FUNDING_TYPE_CHOICES = (
+        ('TYF', 'Two year old funding'),
+        ('SFF30H', '3 & 4 year old universal and extended entitlement')
+    )     
+    funding_type = models.CharField(max_length=6, choices=FUNDING_TYPE_CHOICES)
     funding_weeks = models.PositiveSmallIntegerField()
     funding_min_dob = models.DateField()
     funding_max_dob = models.DateField()
 
-    def __unicode__(self):
-        return self.text
-
 class FeeScale(models.Model):
 
-    fee_funding_type = models.ForeignKey(FundingStream, on_delete=models.CASCADE)
-    fee_dfe_id = models.PositiveIntegerField()
-    fee_setting = models.CharField(max_length=100)
+    fee_funding_stream_id = models.ForeignKey('FundingStream', on_delete=models.CASCADE)
+    fee_dfe_id = models.PositiveIntegerField(blank=True) # not set for TYF
+    fee_setting_name = models.CharField(max_length=100, blank=True) # not set for TYF
     fee_per_hour = models.DecimalField(max_digits=4, decimal_places=2)
 
-    def __unicode__(self):
-        return self.text
+    class Meta: 
+        ordering = ['fee_setting_name']
 
 class Setting(models.Model):
 
-    setting_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_address_1 = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_address_2 = models.CharField(max_length=100)
-    setting_address_3 = models.CharField(max_length=100)
-    setting_address_4 = models.CharField(max_length=100)
-    setting_address_5 = models.CharField(max_length=100)
+    setting_name = models.CharField(max_length=100)
+    setting_address_1 = models.CharField(max_length=100)
+    setting_address_2 = models.CharField(max_length=100, blank=True)
+    setting_address_3 = models.CharField(max_length=100, blank=True)
+    setting_address_4 = models.CharField(max_length=100, blank=True)
+    setting_address_5 = models.CharField(max_length=100, blank=True)
     setting_postcode = models.CharField(
         max_length=8,
         validators=[
@@ -119,14 +168,14 @@ class Setting(models.Model):
                 code='invalid_postcode'
             ),
         ]
-    ) # required=True, produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_phone_number = models.CharField(max_length=20)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_email_address = models.EmailField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    manager_title = models.CharField(max_length=10)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    manager_first_name = models.CharField(max_length=100)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    manager_last_name = models.CharField(max_length=100)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    )
+    setting_email_address = models.EmailField()
+    manager_title = models.CharField(max_length=10)
+    manager_first_name = models.CharField(max_length=100)
+    manager_last_name = models.CharField(max_length=100)
     manager_mobile_number = models.CharField(
         max_length=14,
+        blank=True,
         validators=[
             RegexValidator(
                 regex='^(07[\d]{8,12}|447[\d]{7,11})$',
@@ -135,10 +184,10 @@ class Setting(models.Model):
             ),
         ]
     )
-    manager_email_address = models.EmailField()
-    setting_dfe_urn = models.PositiveIntegerField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_ofsted_urn = models.CharField(max_length=10)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_ofsted_outcome_date = models.DateField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    manager_email_address = models.EmailField(blank=True)
+    setting_dfe_urn = models.PositiveIntegerField()
+    setting_ofsted_urn = models.CharField(max_length=10)
+    setting_ofsted_outcome_date = models.DateField(default=datetime.date(9999,1,1))
     OFSTED_OUTCOME_CHOICES = (
         ('Not Inspected Yet', 'Not Inspected Yet'),
         ('Outstanding', 'Outstanding'),
@@ -148,7 +197,7 @@ class Setting(models.Model):
         ('Requires Improvement', 'Requires Improvement'),
         ('Inadequate', 'Inadequate')
     )
-    setting_ofsted_outcome = models.CharField(max_length=20, choices=OFSTED_OUTCOME_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_ofsted_outcome = models.CharField(max_length=20, choices=OFSTED_OUTCOME_CHOICES)
     SETTING_CATEGORY_CHOICES = (
         ('CHMD', (
                 ('AGY', 'Part of Childminding Agency'),
@@ -161,7 +210,7 @@ class Setting(models.Model):
         ('PRIV', 'Private'),
         ('VOLY', 'Voluntary')
     )    
-    setting_category = models.CharField(max_length=4, choices=SETTING_CATEGORY_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_category = models.CharField(max_length=4, choices=SETTING_CATEGORY_CHOICES)
     SETTING_TYPE_CHOICES = (
         ('DNS', 'Day Nursery'),
         ('PPS', 'Playgroup or Pre-school'),
@@ -171,17 +220,17 @@ class Setting(models.Model):
         ('SSL', 'Satelite Sure Start Children\'s Centre'),
         ('OTH', 'Other')
     )    
-    setting_type = models.CharField(max_length=3, choices=SETTING_TYPE_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_type = models.CharField(max_length=3, choices=SETTING_TYPE_CHOICES)
     SETTING_DAYCARE_CHOICES = (
         ('F', 'Full day (6 hours or more)'),
         ('S', 'Sessional day (less than 6 hours)'),
         ('O', 'Other day care')
     )    
-    setting_daycare_type = models.CharField(max_length=1, choices=SETTING_DAYCARE_CHOICES)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_continuously_open = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_school_relationship = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_establishment_partnership = models.BooleanField()  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    setting_weeks_per_year_open = models.DecimalField(max_digits=3, decimal_places=1, default=38.0)  # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    setting_daycare_type = models.CharField(max_length=1, choices=SETTING_DAYCARE_CHOICES)
+    setting_continuously_open = models.BooleanField(default=False, help_text='Open 24 hours a day, 7 days per week')
+    setting_school_relationship = models.BooleanField(default=False)
+    setting_establishment_partnership = models.BooleanField(default=False)
+    setting_weeks_per_year_open = models.DecimalField(max_digits=3, decimal_places=1, default=38.0)
     setting_total_teaching_staff = models.PositiveSmallIntegerField()
     setting_level2_staff = models.PositiveSmallIntegerField()
     setting_level3_staff_not_management = models.PositiveSmallIntegerField()
@@ -190,12 +239,18 @@ class Setting(models.Model):
     setting_eyps_staff = models.PositiveSmallIntegerField()
     setting_eyts_staff = models.PositiveSmallIntegerField()
 
+    class Meta: 
+        ordering = ['setting_name']
+
     def __unicode__(self):
-        return self.text
+        return f"{self.setting_name}"
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 class SettingDay(models.Model):
 
-    day_setting = models.ForeignKey(Setting, on_delete=models.CASCADE)
+    day_setting_id = models.ForeignKey('Setting', on_delete=models.CASCADE)
     DAYS_OF_WEEK = (
         (1, 'Monday'),
         (2, 'Tuesday'),
@@ -213,35 +268,29 @@ class SettingDay(models.Model):
     day_two_capacity = models.PositiveSmallIntegerField(default=0)
     day_over_two_capacity = models.PositiveSmallIntegerField(default=0)
 
-    def __unicode__(self):
-        return self.text
+class SettingFee(models.Model):
 
-class SettingFees(models.Model):
-
-    fees_setting = models.ForeignKey(Setting, on_delete=models.CASCADE)
+    fee_setting_id = models.ForeignKey('Setting', on_delete=models.CASCADE)
     FEE_GROUP = (
         ('F', 'Weekly Fixed'),
         ('U2', 'Under Two Year Old'),
         ('2', 'Two Year Old'),
         ('O2', 'Over Two Year Old')
     )
-    fees_group = models.CharField(max_length=2, choices=FEE_GROUP)
-    fees_hours = models.DecimalField(max_digits=3, decimal_places=2)
-    fees_amount = models.DecimalField(max_digits=5, decimal_places=2)
-
-    def __unicode__(self):
-        return self.text
+    fee_group = models.CharField(max_length=2, choices=FEE_GROUP)
+    fee_hours = models.DecimalField(max_digits=3, decimal_places=2)
+    fee_amount = models.DecimalField(max_digits=5, decimal_places=2)
 
 class Pupil(models.Model):
 
-    pupil_setting = models.ForeignKey(Setting, on_delete=models.CASCADE)
-    pupil_first_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    pupil_last_name = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    pupil_address_1 = models.CharField(max_length=100) # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
-    pupil_address_2 = models.CharField(max_length=100)
-    pupil_address_3 = models.CharField(max_length=100)
-    pupil_address_4 = models.CharField(max_length=100)
-    pupil_address_5 = models.CharField(max_length=100)
+    pupil_setting_id = models.ForeignKey('Setting', on_delete=models.CASCADE)
+    pupil_first_name = models.CharField(max_length=100)
+    pupil_last_name = models.CharField(max_length=100)
+    pupil_address_1 = models.CharField(max_length=100)
+    pupil_address_2 = models.CharField(max_length=100, blank=True)
+    pupil_address_3 = models.CharField(max_length=100, blank=True)
+    pupil_address_4 = models.CharField(max_length=100, blank=True)
+    pupil_address_5 = models.CharField(max_length=100, blank=True)
     pupil_postcode = models.CharField(
         max_length=8,
         validators=[
@@ -251,8 +300,8 @@ class Pupil(models.Model):
                 code='invalid_postcode'
             ),
         ]
-    ) # required=True, produces TypeError: __init__() got an unexpected keyword argument 'required'
-    pupil_dob = models.DateField() # required=True produces TypeError: __init__() got an unexpected keyword argument 'required'
+    )
+    pupil_dob = models.DateField()
     GENDER = (
         ('1', 'Male'),
         ('2', 'Female'),
@@ -392,27 +441,28 @@ class Pupil(models.Model):
         ('E', 'Education, health and care plan'),
         ('K', 'SEN support')
     )
-    pupil_sen = models.CharField(max_length=1, choices=SEN_PROVISION)
-    pupil_daf = models.BooleanField()
+    pupil_sen = models.CharField(max_length=1, choices=SEN_PROVISION, default='N')
+    pupil_daf = models.BooleanField(default=False)
     pupil_start_date = models.DateField()
-    pupil_finish_date = models.DateField()
-    pupil_tyo_start_date = models.DateField()
-    pupil_tyo_finish_date = models.DateField()
-    pupil_sff_start_date = models.DateField()
-    pupil_sff_finish_date = models.DateField()
-    pupil_30h_start_date = models.DateField()
-    pupil_30h_finish_date = models.DateField()
-    pupil_30h_grace_period = models.DateField()
+    pupil_finish_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_tyo_start_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_tyo_finish_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_sff_start_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_sff_finish_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_30h_start_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_30h_finish_date = models.DateField(default=datetime.date(9999,1,1))
+    pupil_30h_grace_period = models.DateField(default=datetime.date(9999,1,1))
     pupil_total_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_hours mon - sun
     pupil_total_tyf_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_tyf_hours: mon + tue + wed + thu + fri + sat + sun
     pupil_total_sff_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_sff_hours: mon + tue + wed + thu + fri + sat + sun
     pupil_total_30h_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_30h_hours: mon + tue + wed + thu + fri + sat + sun
     pupil_total_funded_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_funded_hours: mon + tue + wed + thu + fri + sat + sun
-    pupil_notes = models.TextField()
-    pupil_parent_name = models.CharField(max_length=100)
-    pupil_parent_dob = models.DateField()
+    pupil_notes = models.TextField(blank=True)
+    pupil_parent_name = models.CharField(max_length=100, blank=True)
+    pupil_parent_dob = models.DateField(default=datetime.date(9999,1,1))
     pupil_parent_nino = models.CharField(
         max_length=9,
+        default=None,
         validators=[
             RegexValidator(
                 regex='^[ABCEGHJKLMNOPRSTWXYZ][ABCEGHJKLMNPRSTWXYZ][0-9]{6}[A-D ]$',
@@ -422,6 +472,7 @@ class Pupil(models.Model):
         ]
     )
     EYPP_STATUS = (
+        ('Not Applicable', 'Not Applicable'),
         ('Parent Declined', 'Parent Declined'),
         ('Incomplete data', 'Incomplete data'),
         ('Submit', 'Submit'),
@@ -429,10 +480,11 @@ class Pupil(models.Model):
         ('Eligible', 'Eligible')
     )
     eypp_status = models.CharField(max_length=15, choices=EYPP_STATUS)
-    eypp_check_date = models.DateField()
-    eypp_outcome = models.BooleanField()
+    eypp_check_date = models.DateField(default=datetime.date(9999,1,1))
+    eypp_outcome = models.BooleanField(blank=True)
     tyf_reference = models.CharField(
         max_length=17,
+        blank=True,
         validators=[
             RegexValidator(
                 regex='^TYF-[0-9]{4}-[A-Z0-9]{8}$',
@@ -442,6 +494,7 @@ class Pupil(models.Model):
         ]
     )
     TYF_STATUS = (
+        ('Not Applicable', 'Not Applicable'),
         ('TYOF not claimed', 'TYOF not claimed'),
         ('Invalid TYOF format', 'Invalid TYOF format'),
         ('TYOF Reference not found on the Portal', 'TYOF Reference not found on the Portal'),
@@ -451,17 +504,18 @@ class Pupil(models.Model):
         ('Submitted tyf start date precedes the eligibility start date', 'Submitted tyf start date precedes the eligibility start date'),
         ('Eligible', 'Eligible')
     )
-    tyf_status = models.CharField(max_length=100, choices=TYF_STATUS)
-    tyf_portal_forename = models.CharField(max_length=100)
-    tyf_portal_surname = models.CharField(max_length=100)
-    tyf_portal_dob = models.DateField()
+    tyf_status = models.CharField(max_length=100, choices=TYF_STATUS, blank=True)
+    tyf_portal_forename = models.CharField(max_length=100, blank=True)
+    tyf_portal_surname = models.CharField(max_length=100, blank=True)
+    tyf_portal_dob = models.DateField(default=datetime.date(9999,1,1))
     TYF_FUNDING_BASIS = (
         ('ECO', 'Economic criteria'),
         ('HSD', 'High-level SEN or disability'),
         ('LAA', 'Looked after or adopted from care')
     )
-    tyf_basis_for_funding = models.CharField(max_length=3, choices=TYF_FUNDING_BASIS)
+    tyf_basis_for_funding = models.CharField(max_length=3, choices=TYF_FUNDING_BASIS, blank=True)
     thirty_hours_dern = models.PositiveIntegerField(
+        blank=True,
         validators=[
             RegexValidator(
                 regex='^[1-9][0-9]{10}$',
@@ -482,18 +536,23 @@ class Pupil(models.Model):
         ('Beyond Grace Period on Portal', 'Beyond Grace Period on Portal'),
         ('Eligible', 'Eligible')
     )
-    thirty_hours_dern_status = models.CharField(max_length=100, choices=DERN_STATUS)
-    thirty_hours_portal_forename = models.CharField(max_length=100)
-    thirty_hours_portal_surname = models.CharField(max_length=100)
-    thirty_hours_portal_dob = models.DateField()
+    thirty_hours_dern_status = models.CharField(max_length=100, choices=DERN_STATUS, blank=True)
+    thirty_hours_portal_forename = models.CharField(max_length=100, blank=True)
+    thirty_hours_portal_surname = models.CharField(max_length=100, blank=True)
+    thirty_hours_portal_dob = models.DateField(default=datetime.date(9999,1,1))
 
+    class Meta: 
+        ordering = ['pupil_last_name', 'pupil_first_name']
 
     def __unicode__(self):
-        return self.text
+        return f"{self.pupil_last_name} {self.pupil_first_name} {self.pupil_dob}"
 
-class Pupil_Sessions(models.Model):
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
-    session_pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE)
+class PupilSessions(models.Model):
+
+    session_pupil_id = models.ForeignKey('Pupil', on_delete=models.CASCADE)
     DAYS_OF_WEEK = (
         (1, 'Monday'),
         (2, 'Tuesday'),
@@ -507,10 +566,7 @@ class Pupil_Sessions(models.Model):
     session_start_time = models.TimeField(default=datetime.time(00, 00))
     session_finish_time = models.TimeField(default=datetime.time(00, 00))
     session_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_finish_time - session_start_time
-    session_tyf_hours = models.DecimalField(max_digits=4, decimal_places=2)
-    session_sff_hours = models.DecimalField(max_digits=4, decimal_places=2)
-    session_30h_hours = models.DecimalField(max_digits=4, decimal_places=2)
+    session_tyf_hours = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
+    session_sff_hours = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
+    session_30h_hours = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
     session_funded_hours = models.DecimalField(max_digits=4, decimal_places=2) # derived field: session_tyf_hours + session_sff_hours + session_30h_hours
-
-    def __unicode__(self):
-        return self.text

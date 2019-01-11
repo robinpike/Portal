@@ -12,7 +12,26 @@ import app.views
 # Uncomment the next lines to enable the admin:
 from django.conf.urls import include
 from django.contrib import admin
-# from django.contrib.auth import views as auth_views
+
+# 2018-10-26 no longer necessary as autodiscover automatically finds everything. Might not even be necessary to call autodiscover any more as it supposedly runs automatically.
+
+# from Portal.app.models import User, Group, MemberOf, Files, FilesSent, Term, FundingStream, FeeScale, Setting, SettingDay, SettingFees, Pupil, PupilSessions
+# admin.site.register(User)
+# admin.site.register(Group)
+# admin.site.register(MemberOf)
+# admin.site.register(Files)
+# admin.site.register(FilesSent)
+# admin.site.register(Term)
+# admin.site.register(FundingStream)
+# admin.site.register(FeeScale)
+# admin.site.register(Setting)
+# admin.site.register(SettingDay)
+# admin.site.register(SettingFees)
+# admin.site.register(Pupil)
+# admin.site.register(PupilSessions)
+
+from django.contrib.auth import views as auth_views
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -41,8 +60,8 @@ urlpatterns = [
         name='logout'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls)),
 ]
